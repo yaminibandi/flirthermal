@@ -45,6 +45,7 @@ import android.content.Context;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -305,19 +306,21 @@ class CameraHandler {
                     int rectangleY = (int) (y1 + height/2);
                         try{
                             double averageTemp = 0;
+                            DecimalFormat df = new DecimalFormat("#.##");
                             averageTemp = thermalImage.getValueAt(new Point( (int)(rectangleX /2.25), (int)(rectangleY / 2.25)));
                             averageTemp-=273;
+                            averageTemp-=0.5;
                             Log.d("TEMP", Double.toString(averageTemp));
-
+                            String averageTempString=df.format(averageTemp);
                             if( averageTemp >= 36.5){
                                 myRectPaint.setColor(Color.RED);
                                 myRectPaint.setTextSize((int) (70));
-                                tempCanvas.drawText(Double.toString(averageTemp), x1, y1, myRectPaint);
+                                tempCanvas.drawText(averageTempString, x1, y1, myRectPaint);
                                 tempCanvas.drawRoundRect(new RectF(x1, y1, x2, y2), 2, 2, myRectPaint);
                             } else{
                                 myRectPaint.setColor(Color.BLUE);
                                 myRectPaint.setTextSize((int) (70));
-                                tempCanvas.drawText(Double.toString(averageTemp), x1, y1, myRectPaint);
+                                tempCanvas.drawText(averageTempString, x1, y1, myRectPaint);
                                 tempCanvas.drawRoundRect(new RectF(x1, y1, x2, y2), 2, 2, myRectPaint);
                             }
 

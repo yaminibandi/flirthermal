@@ -20,10 +20,14 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Base64;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -102,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
     private UsbPermissionHandler usbPermissionHandler = new UsbPermissionHandler();
     private RequestQueue queue;
 
-    String givenUrl;
+    String givenUrl,formattedUrl;
     private Button addURL;
 
     /**
@@ -132,35 +136,6 @@ public class MainActivity extends AppCompatActivity {
 
 //        showSDKversion(ThermalSdkAndroid.getVersion());
 
-        addURL=(Button)findViewById(R.id.button);
-        addURL.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                LayoutInflater li = LayoutInflater.from(context);
-                View promptsView = li.inflate(R.layout.prompt, null);
-                android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(context);
-                alertDialogBuilder.setView(promptsView);
-                final EditText url=(EditText) promptsView.findViewById(R.id.url);
-
-                alertDialogBuilder
-                        .setCancelable(false)
-                        .setPositiveButton("OK",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog,int id) {
-                                        givenUrl=url.getText().toString();
-                                        Toast.makeText(getApplicationContext(),"Entered URL: "+givenUrl, Toast.LENGTH_LONG).show();
-                                    }
-                                })
-                        .setNegativeButton("Cancel",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog,int id) {
-                                        dialog.cancel();
-                                    }
-                                });
-                AlertDialog alertDialog = alertDialogBuilder.create();
-                alertDialog.show();
-            }
-        });
     }
 
     public void startDiscovery(View view) {
@@ -173,6 +148,8 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void connectFlirOne(View view) {
+        cameraHandler.startDiscovery(cameraDiscoveryListener, discoveryStatusListener);
+        SystemClock.sleep(2000);
         connect(cameraHandler.getFlirOne());
     }
 
@@ -374,8 +351,6 @@ public class MainActivity extends AppCompatActivity {
                     // IMAGE WE SHOW ON SCREEN.
                     photoImage.setImageBitmap(dcBitmap);
 
-
-
                     // CONVERTING IMAGE
                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                     dcBitmap.compress(Bitmap.CompressFormat.JPEG, 35, byteArrayOutputStream);
@@ -385,7 +360,7 @@ public class MainActivity extends AppCompatActivity {
                     object.put("image", encoded);
 
                     // SENDING REQUEST. CHANGE URL
-                    CustomRequest jsonObjectRequest = new CustomRequest(Request.Method.POST, "http://192.168.1.2:5000/api", object,
+                    CustomRequest jsonObjectRequest = new CustomRequest(Request.Method.POST, formattedUrl, object,
                             new Response.Listener<JSONObject>() {
                                 @Override
                                 public void onResponse(JSONObject response) {
@@ -456,6 +431,63 @@ public class MainActivity extends AppCompatActivity {
         msxImage = findViewById(R.id.msx_image);
         photoImage = findViewById(R.id.photo_image);
     }
+    public void showPrompt(){
+        LayoutInflater li = LayoutInflater.from(context);
+        View promptsView = li.inflate(R.layout.prompt, null);
+        android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(context);
+        alertDialogBuilder.setView(promptsView);
+        final EditText url=(EditText) promptsView.findViewById(R.id.url);
+
+        alertDialogBuilder
+                .setCancelable(false)
+                .setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                givenUrl=url.getText().toString();
+                                formattedUrl="http://"+givenUrl+":5000/api";
+                                Toast.makeText(getApplicationContext(),"Entered URL: "+givenUrl, Toast.LENGTH_LONG).show();
+                            }
+                        })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                dialog.cancel();
+                            }
+                        });
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_addurl:
+                showPrompt();
+                return true;
+            case R.id.menu_flirone:
+                connectFlirOne(new View(context));
+                return true;
+            case R.id.menu_disconnect:
+                disconnect();
+                return true;
+            case R.id.menu_simulator:
+                connectSimulatorTwo(new View((context)));
+                return true;
+//            case R.id.menu_startdiscovery:
+//                startDiscovery();
+//                return true;
+            case R.id.menu_stopdiscovery:
+                stopDiscovery();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
 }
 
@@ -505,4 +537,5 @@ class CustomRequest extends Request<JSONObject> {
         // TODO Auto-generated method stub
         listener.onResponse(response);
     }
+
 }
